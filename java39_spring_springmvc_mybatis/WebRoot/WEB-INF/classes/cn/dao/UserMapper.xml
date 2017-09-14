@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="cn.dao.UserMapper">
+ 	<select id="getUsers" parameterType="User" resultMap="map1">
+ 		select u.* ,r.roleName ,r.id as r_id  from smbms_user u
+ 			inner join smbms_role r on u.userRole = r.id
+ 				and u.userName like CONCAT('%',#{userName},'%')
+ 					and u.userRole=#{userRole}
+ 	</select>
+ 	<resultMap type="User" id="map1">
+ 		<id column="id" property="id"/>
+ 		<association property="role" javaType="Role">
+ 			<id column="r_id" property="id" />
+ 		</association>
+ 	</resultMap>
+ 	
+ 	<insert id="addUser" parameterType="User">
+ 		insert into smbms_user (
+ 			userCode,userName,userPassword,
+ 				gender,birthday ,phone,address,userRole,createdBy,creationDate,idPicPath
+ 				)
+ 				values (
+ 				#{userCode},#{userName},#{userPassword},#{gender},
+ 					#{birthday},#{phone},#{address},#{userRole},#{createdBy},
+ 					 #{creationDate},#{idPicPath}
+ 				)
+ 	</insert>
+ 	
+ 	<!-- 通过用户名和密码查找一个用户 -->
+ 	<select id ="login" parameterType="User" resultType="User">
+ 		select * from smbms_user u 
+ 			where u.userName =#{userName}  
+ 				and u.userPassword=#{userPassword}
+ 	</select>
+ 	
+ 	<!-- 获得所有用户信息 -->
+ 	<select id="getAllUsers" resultMap="map1">
+ 		select u.*,(year(now())-year(u.birthday)) age,r.roleName ,r.id as r_id 
+ 			from smbms_user u,smbms_role r 
+ 				where u.userRole = r.id
+ 	</select>
+ 	
+ 	<!-- 按姓名进行模糊查询获得总数 -->
+ 	<select id="count" resultType="int">
+ 		select count(1) from smbms_user 
+ 			where 1=1 
+ 			<if test="userName!=null and userName!=''">
+ 				and	 userName  like concat('%',#{userName},'%');
+ 			</if>
+ 	</select>
+ 	
+ 	<!-- 根据姓名，行号，页码进行模糊分页查询 -->
+ 	<select id="getAllUsersByName" resultMap="map1">
+ 		select u.*,(year(now())-year(u.birthday)) age,r.roleName ,r.id as r_id 
+ 			from smbms_user u,smbms_role r 
+ 				where u.userRole = r.id  
+ 				<if test="userName!=null and userName!='' ">
+ 					and u.userName like concat('%',#{userName},'%')
+ 				</if>
+ 				<if test="row!=null and pageCount!=null">
+ 					limit #{row},#{pageCount}
+ 				</if>
+ 				<if test="row==null and pageCount==null">
+ 					limit 0,4
+ 				</if>
+ 	</select>
+ 	
+ 	<!-- 根据id进行删除 -->
+ 	<delete id="deleteUserById" parameterType="User" >
+ 		delete from smbms_user where id = #{id} 
+ 	</delete>
+ 	
+ 	<select id="getUserByUserCode" resultType="User">
+ 		select * from smbms_user where userCode =#{userCode}
+ 	</select>
+ 	
+ 	<select id="getUserSex" resultType="int">
+ 		select gender from smbms_user group by  gender
+ 	</select>
+ 	
+ 	<select id="getById" resultType="User">
+ 		select * from smbms_user where id = #{id}
+ 	</select>
+ 	
+ 	<update id="updateUser" >
+ 		update  smbms_user set userName=#{userName} ,
+ 			gender =#{gender},birthday=#{birthday},
+ 				phone=#{phone},address=#{address},
+ 					userRole =#{userRole} where id =#{id}
+ 	</update>
+ 	
+ 	<update id="doUpdatePass" >
+ 		update  smbms_user set userPassword=#{userPassword} 
+ 			 where id =#{id}
+ 	</update>
+ 	
+ </mapper>
+
